@@ -49,3 +49,9 @@ h2.login-title {
 .login-btn:active {
   transform: scale(0.95);
 }
+
+.login-error {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: red;
+}

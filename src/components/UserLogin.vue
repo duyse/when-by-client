@@ -10,6 +10,7 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" required v-model="loginRequest.password" />
                 </div>
+                <div class="login-error">{{ this.message }}</div>
             </form>
             <button type="submit" class="login-btn" @click="login">Login</button>
             <p>Don't have an account? <router-link to="/register">Register here</router-link></p> <!--router-link-->
@@ -28,7 +29,8 @@
                 loginRequest: {
                     username: "",
                     password: ""
-                }
+                },
+                message: ""
             }
         },
 
@@ -46,6 +48,7 @@
                 .catch((err) => {
                     this.loginRequest.username = ""
                     this.loginRequest.password = ""
+                    this.message = err.response.data.message
                     console.log(err.response.data)
                 })
             }
