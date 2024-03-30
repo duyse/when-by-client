@@ -1,10 +1,16 @@
-// import Login from '../components/Login.vue';
+import UserLogin from '../components/UserLogin.vue';
+import UserRegister from '../components/UserRegister.vue';
 
 export default [
     {
         path: '/',
         alias: '/login',
         name: 'login',
-        // component: (Login)
+        component: UserLogin
     },
-];
+    {
+        path: '/register',
+        name: 'register',
+        component: UserRegister
+    }
+]
