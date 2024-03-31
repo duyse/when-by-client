@@ -42,7 +42,8 @@
                 .then((res) => {
                     let user = res.data
                     console.log("User has logged in: " + user.username)
-                    // localStorage.setItem('uid', user.id)
+                    localStorage.setItem('uid', user.id)
+                    location.reload()
                     // this.$router.push({ name: "" });     //redirect to the home screen
                 })
                 .catch((err) => {
