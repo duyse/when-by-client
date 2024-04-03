@@ -1,20 +1,26 @@
 <template>
+  <h1 id="title">Availabilities</h1>
   <div class="time-slots">
-    <p v-if="isEditable">{{ meetingName }}</p>
-    <h1 id="title">Availabilities</h1>
     <div id="selector">
-      <vue-meeting-selector
-      v-model="meeting" :date="date"
-      :loading="loading"
-      :class-names="classNames"
-      :meetings-days="meetingsDays"
-      :multi="true" />
-      <p> {{ meeting.length ? meeting : "No time slot selected" }}</p>
+      <vue-meeting-selector v-model="meeting" :date="date" :loading="loading" :class-names="classNames"
+        :meetings-days="meetingsDays" :multi="true" />
       <div id="action">
-        <custom-button icon="plus" @click="add">Add</custom-button>
-        <custom-button icon="paper-plane" @click="send">Send</custom-button>
+        <button id="add" class="custom-button" @click="add">
+          <span>Add</span>
+          <i id="icon" class="fa-solid fa-plus"></i>
+        </button>
+        <button id="send" class="custom-button" @click="send">
+          <span>Send</span>
+          <i id="icon" class="fa-solid fa-paper-plane"></i>
+        </button>
+        <input type="text" v-model="attendee" placeholder="Input attendee" />
+        <p>Time slots:</p>
+        <p v-for="(element, index) in selections" :key="index">
+          {{ element.attendee }}: {{ Array.from(element.slots).join(', ') }}
+          <i id="icon" class="fa-solid fa-xmark" @click="remove(index)"></i>
+        </p>
       </div>
-  </div>
+    </div>
   </div>
 </template>
 
@@ -23,25 +29,18 @@ import {
   defineComponent,
   ref,
   computed,
-  onMounted
+  onMounted,
 } from 'vue';
 
 import VueMeetingSelector from 'vue-meeting-selector';
 import slotsGenerator from 'vue-meeting-selector/src/helpers/slotsGenerator.js';
-import CustomButton from './widgets/CustomButton.vue';
 import 'vue-meeting-selector/dist/style.css';
+import { convertISOToCustomFormat, getEndTime, findIntersection } from '@/utils/dateUtils';
 
 export default defineComponent({
   name: 'SimpleMultiExample',
-  props: {
-    meetingName: {
-      type: String,
-      required: true,
-    },
-  },
   components: {
     VueMeetingSelector,
-    CustomButton,
   },
   setup() {
     const date = ref(new Date());
@@ -49,6 +48,8 @@ export default defineComponent({
     const meeting = ref([]);
     const loading = ref(true);
     const daysToDisplay = computed(() => 1);
+    const selections = ref([]);
+    const attendee = ref('');
 
     const classNames = computed(() => ({
       tabPaginationPreviousButton: 'prev-button',
@@ -70,11 +71,11 @@ export default defineComponent({
 
     onMounted(async () => {
       const start = {
-        hours: 8,
+        hours: 1,
         minutes: 0,
       };
       const end = {
-        hours: 16,
+        hours: 24,
         minutes: 0,
       };
 
@@ -88,21 +89,6 @@ export default defineComponent({
       loading.value = false;
     });
 
-    const send = () => {
-      `
-      <h4><b>Whenby Team</b></h4>
-      <p>
-        Your meeting information is as follows:\n
-        Meeting: example\n
-        Time: \n
-      </p>
-      `
-    };
-
-    const add = () => {
-      
-    };
-
     return {
       date,
       meetingsDays,
@@ -110,10 +96,34 @@ export default defineComponent({
       loading,
       daysToDisplay,
       classNames,
-      add,
-      send,
+      attendee,
+      selections,
     };
   },
+  methods: {
+    send() {
+      let slots = [];
+      this.selections.forEach(selection => {
+        selection.slots.forEach(slot => {
+          slots.push({ start: slot, end: getEndTime(slot, 30) })
+        });
+      });
+      console.log(findIntersection(slots));
+    },
+    add() {
+      if (!this.attendee.length || !this.meeting.length) return; // if attendee is inputted or time slots are selected, do nothing
+      const slotsSet = new Set(this.meeting.map(time => convertISOToCustomFormat(time.date)));
+      const foundEntry = this.selections.find(selection => selection.attendee === this.attendee);
+      if (foundEntry) {
+        let existingSlotsSet = foundEntry.slots;
+        slotsSet.forEach(slot => existingSlotsSet.add(slot));
+      }
+      else this.selections.push({ attendee: this.attendee, slots: slotsSet });
+    },
+    remove(index) {
+      this.selections = this.selections.filter(selection => selection.attendee !== this.selections[index].attendee);
+    }
+  }
 });
 </script>
 
@@ -122,7 +132,6 @@ export default defineComponent({
   display: flex;
   justify-content: space-around;
   align-items: center;
-  margin-top: 300px;
 }
 
 #selector {
@@ -138,8 +147,36 @@ export default defineComponent({
   display: none;
 }
 
+#send {
+  margin: 0 10px 0 10px;
+}
+
+input[type="text"] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.custom-button {
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 10px;
+  transition: 0.3s ease;
+}
+
+.custom-button:hover {
+  background-color: #0056b3;
+}
+
+#icon {
+  margin-left: 5px;
+  cursor: pointer;
+}
+
 #action {
-  display: flex;
-  align-items:center;
+  margin-top: 20px;
 }
 </style>

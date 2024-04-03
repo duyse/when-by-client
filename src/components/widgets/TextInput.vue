@@ -3,7 +3,8 @@
     <label :for="id">
       <slot></slot>
     </label>
-    <input :type="type" :placeholder="placeholder" class="textInput" required v-model="inputValue" @input="$emit('input', $event.target.value)" />
+    <input :type="type" :placeholder="placeholder" class="textInput" required :value="inputValue"
+      @input="updateInput($event.target.value)" />
   </div>
 </template>
 
@@ -20,17 +21,13 @@ export default {
       type: String,
       default: '',
     },
-  },
-  data() {
-    return {
-      inputValue: '',
-    };
+    inputValue: String,
   },
   methods: {
-    handleChange(e) {
-      this.$emit('input', e.target.value);
-    }
-  },
+    updateInput(inputValue) {
+      this.$emit('update:inputValue', inputValue); // Emitting an event to update the value
+    },
+  }
 }
 </script>
 

@@ -13,8 +13,8 @@
 
 <script>
 import { login } from '../apis/login';
-import TextInput from './widgets/TextInput.vue';
 import CustomButton from './widgets/CustomButton.vue';
+import TextInput from './widgets/TextInput.vue';
 
 export default {
   name: "UserLogin",
@@ -33,9 +33,9 @@ export default {
   },
 
   methods: {
-    login(event) {
-      event.preventDefault();
-
+    login(e) {
+      e.preventDefault()
+      console.log(this.loginRequest);
       login(this.loginRequest)
         .then((res) => {
           let user = res.data
