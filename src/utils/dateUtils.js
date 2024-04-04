@@ -1,39 +1,33 @@
 import moment from 'moment';
 
-export function convertISOToCustomFormat(inputDate) {
-  return moment(inputDate, moment.ISO_8601).format('hh:mm:ss A');
-}
-
-export function getEndTime(startTime, hours) {
-  const duration = moment.duration(hours, 'minutes');
-  startTime = moment(startTime, 'hh:mm:ss A');
-  const endTime = startTime.clone().add(duration);
-  return endTime.format('hh:mm:ss A');
-}
-
-// Define function to find intersection of time slots
 export function findIntersection(timeSlots) {
-  const parsedTimeSlots = timeSlots.map(slot => ({
-    start: moment(slot.start, 'YYYY-MM-DD HH:mm:ss'),
-    end: moment(slot.end, 'YYYY-MM-DD HH:mm:ss')
-  }));
-  // Find maximum start time and minimum end time
-  let maxStartTime = parsedTimeSlots[0].start;
-  let minEndTime = parsedTimeSlots[0].end;
-  console.log(maxStartTime, minEndTime);
-  parsedTimeSlots.forEach(slot => {
-    if (slot.start.isAfter(maxStartTime)) {
-      maxStartTime = slot.start;
-    }
-    if (slot.end.isBefore(minEndTime)) {
-      minEndTime = slot.end;
-    }
-  });
-
-  // Check for intersection
-  if (maxStartTime.isBefore(minEndTime) || maxStartTime.isSame(minEndTime)) {
-    return { start: maxStartTime, end: minEndTime };
-  } else {
-    return null; // No intersection
+  if (timeSlots.length < 2) {
+    return null; // Cannot find intersection with less than two time slots
   }
+  const firstSlots = Array.from(timeSlots[0].slots).map(slot => ({
+    start: moment(slot.start, 'hh:mm A'),
+    end: moment(slot.end, 'hh:mm A'),
+  }));
+  let intersectionStart = firstSlots[0].start;
+  let intersectionEnd = firstSlots[0].end;
+  for (const attendee of timeSlots) {
+    const attendeeSlots = Array.from(attendee.slots).map(slot => ({
+      start: moment(slot.start, 'hh:mm A'),
+      end: moment(slot.end, 'hh:mm A'),
+    }));
+
+    for (const slot of attendeeSlots) {
+      // If there's no overlap, return null
+      if (slot.end.isBefore(intersectionStart) || slot.start.isAfter(intersectionEnd))
+        return null;
+      // Update intersection
+      intersectionStart = moment.max(intersectionStart, slot.start);
+      intersectionEnd = moment.min(intersectionEnd, slot.end);
+    }
+  }
+  // If intersectionStart is after intersectionEnd, there's no overlap
+  if (intersectionStart.isAfter(intersectionEnd)) {
+    return null;
+  }
+  return { start: intersectionStart.format('hh:mm A'), end: intersectionEnd.format('hh:mm A') };
 }
