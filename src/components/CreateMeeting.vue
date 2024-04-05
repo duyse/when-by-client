@@ -15,6 +15,9 @@
         <br/>
         <br/>
         <button type="submit" class="submit-btn" @click="create">Create Meeting</button>
+        <br/>
+        <br/>
+        <div class="error">{{ this.message }}</div>
     </div>
 </template>
 
@@ -32,6 +35,7 @@ export default {
                 endTime:"",
             },
             userId: 0,
+            message: "",
         }
     },
     methods: {
@@ -63,6 +67,12 @@ export default {
         async create(event) {
                 event.preventDefault();
                 console.log("user id: " + this.userId)
+
+                if (this.createMeetingRequest.endTime < this.createMeetingRequest.startTime) {
+                    console.error("End time cannot be before start time");
+                    this.message = "End time cannot be before start time"
+                    return;
+                }
                 
                 const startDate = new Date(this.createMeetingRequest.meetingDate + 'T' + this.createMeetingRequest.startTime);
                 const endDate = new Date(this.createMeetingRequest.meetingDate + 'T' + this.createMeetingRequest.endTime);
@@ -79,6 +89,7 @@ export default {
                     console.log(response);
                 } catch (error) {
                     console.error(error);
+                    this.message = error.message;
                 }
             }
         },

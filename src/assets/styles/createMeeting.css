@@ -33,3 +33,9 @@
   .submit-btn:active {
     transform: scale(0.95);
   }
+
+.error {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: red;
+}
