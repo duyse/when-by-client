@@ -68,9 +68,9 @@ export default {
                 event.preventDefault();
                 console.log("user id: " + this.userId)
 
-                if (this.createMeetingRequest.endTime < this.createMeetingRequest.startTime) {
-                    console.error("End time cannot be before start time");
-                    this.message = "End time cannot be before start time"
+                if (this.createMeetingRequest.endTime <= this.createMeetingRequest.startTime) {
+                    console.error("End time cannot be the same or before start time");
+                    this.message = "End time cannot be the same or before start time"
                     return;
                 }
                 
