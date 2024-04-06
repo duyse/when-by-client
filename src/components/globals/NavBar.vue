@@ -7,6 +7,7 @@
                 <span class="nav-link">
                     <li><router-link to="/" @click="logout">{{ loginLinkText }}</router-link></li>
                     <div v-if="uid">
+                        <li><router-link to="/update-user">Profile</router-link></li>
                         <li><router-link to="/new-meeting">New Meeting</router-link></li>
                         <li><router-link to="/meetings">Meetings</router-link></li>
                     </div>
