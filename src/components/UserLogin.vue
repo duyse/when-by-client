@@ -32,17 +32,16 @@ export default {
       message: ""
     }
   },
-
   methods: {
     login(event) {
       event.preventDefault();
-
       login(this.loginRequest)
         .then((res) => {
           let user = res.data
-          console.log("User has logged in: " + user.username)
-          // localStorage.setItem('uid', user.id)
-          // this.$router.push({ name: "" });     //redirect to the home screen
+          let userId = user.id
+          localStorage.setItem("id", userId);
+          console.log("User has logged in: " + user.username + userId)
+          this.$router.push({ name: "createMeeting", params: { userId: userId } });     //redirect to the home screen
         })
         .catch((err) => {
           this.loginRequest.username = ""
