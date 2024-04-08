@@ -42,16 +42,26 @@
                 .then((res) => {
                     let user = res.data
                     console.log("User has logged in: " + user.username)
-                    // localStorage.setItem('uid', user.id)
-                    // this.$router.push({ name: "" });     //redirect to the home screen
+                    localStorage.setItem('uid', user.id)
+                    location.reload();
+                    this.$router.push({ name: "meetings" });     //redirect to the home screen
                 })
                 .catch((err) => {
                     this.loginRequest.username = ""
                     this.loginRequest.password = ""
-                    this.message = err.response.data.message
-                    console.log(err.response.data)
+                    console.log(err)
                 })
+            },
+
+            checkLogin() {
+                if (localStorage.getItem('uid')) {
+                    this.$router.push({name: 'meetings'})
+                }
             }
+        },
+
+        mounted() {
+            this.checkLogin();
         }
     }
 
