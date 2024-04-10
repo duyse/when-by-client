@@ -30,6 +30,35 @@ export default {
         password: '',
       },
       message: '',
+        methods: {
+            login(event) {
+                event.preventDefault();
+
+                login(this.loginRequest)
+                .then((res) => {
+                    let user = res.data
+                    console.log("User has logged in: " + user.username)
+                    localStorage.setItem('uid', user.id)
+                    location.reload();
+                    this.$router.push({ name: "meetings" });     //redirect to the home screen
+                })
+                .catch((err) => {
+                    this.loginRequest.username = ""
+                    this.loginRequest.password = ""
+                    console.log(err)
+                })
+            },
+
+            checkLogin() {
+                if (localStorage.getItem('uid')) {
+                    this.$router.push({name: 'meetings'})
+                }
+            }
+        },
+
+        mounted() {
+            this.checkLogin();
+        }
     }
   },
   methods: {
