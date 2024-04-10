@@ -6,11 +6,11 @@
       <input type="text" v-model="attendee" placeholder="Input attendee" />
       <button id="add" @click="add">
         <span>Add</span>
-        <i id="icon" class="fa-solid fa-plus"></i>
+        <i class="icon fa-solid fa-plus"></i>
       </button>
-      <button id="send" @click="send">
-        <span>Send</span>
-        <i id="icon" class="fa-solid fa-paper-plane"></i>
+      <button id="send" @click="create">
+        <span>Create</span>
+        <i class="icon fa-solid fa-paper-plane"></i>
       </button>
     </div>
     <!-- Slots -->
@@ -19,23 +19,24 @@
       <div v-for="(element, index) in selections" :key="index">
         <p v-for="(slot, _index) in Array.from(element.slots)" :key="_index">
           {{ element.attendee }}: {{ slot.start }} - {{ slot.end }}
+          <i class="icon fa-solid fa-trash"></i>
         </p>
       </div>
       <p v-if="intersection.start">Best time interval: {{ intersection.start }} - {{ intersection.end }}</p>
     </div>
     <!-- Time picker -->
     <div id="time-picker">
-      <vue-timepicker v-model="startTime" manual-input hide-dropdown format="hh:mm A" class="time"
-        :hour-range="[[1, 24]]" :minute-interval="30" placeholder="Start Time">
+      <vue-timepicker hide-disabled-hours v-model="startTime" manual-input hide-dropdown class="time"
+        :hour-range="[[0, 24]]" :minute-interval="30" placeholder="Start Time">
         <template #icon>
-          <i id="icon" class="fa-regular fa-clock"></i>
+          <i class="icon fa-regular fa-clock"></i>
         </template>
       </vue-timepicker>
       &nbsp;
-      <vue-timepicker v-model="endTime" manual-input hide-dropdown format="hh:mm A" class="time" :hour-range="[[1, 24]]"
+      <vue-timepicker v-model="endTime" manual-input hide-dropdown class="time" :hour-range="[[0, 24]]"
         :minute-interval="30" placeholder="End Time">
         <template #icon>
-          <i id="icon" class="fa-regular fa-clock"></i>
+          <i class="icon fa-regular fa-clock"></i>
         </template>
       </vue-timepicker>
     </div>
@@ -44,15 +45,23 @@
 
 <script>
 import VueTimepicker from 'vue3-timepicker';
-import 'vue3-timepicker/dist/VueTimepicker.css';
-import { findIntersection } from '@/utils/dateUtils';
 import moment from 'moment';
-import { useToast } from "vue-toastification";
+import { findIntersection, formatDate } from '@/utils/dateUtils';
+import { useToast } from 'vue-toastification';
+import 'vue3-timepicker/dist/VueTimepicker.css';
+import { useSharedStore } from '@/utils/store';
+import { createMeeting } from "@/apis/create";
 
 export default {
-  name: "TimePicker",
+  name: 'TimePicker',
   components: {
     VueTimepicker,
+  },
+  setup() {
+    const sharedStore = useSharedStore();
+    const toast = useToast();
+    const meetingData = sharedStore.sharedData;
+    return { meetingData, toast }
   },
   data() {
     return {
@@ -61,20 +70,19 @@ export default {
       placeholder: 'Start Time',
       attendee: '',
       selections: [],
-      intersection: {},
+      intersection: {
+        start: '',
+        end: '',
+      },
     }
-  },
-  setup() {
-    const toast = useToast();
-    return { toast }
   },
   methods: {
     add() {
       if (!this.attendee || !this.startTime || !this.endTime) {
         this.toast.error('Attendee and time must not be blank');
         return;
-      } // TODO: add with toast message
-      const newSlot = { start: moment(this.startTime, 'hh:mm A').format('hh:mm A'), end: moment(this.endTime, 'hh:mm A').format('hh:mm A') };
+      }
+      const newSlot = { start: moment(this.startTime).format('hh:mm:ss A'), end: moment(this.endTime).format('hh:mm:ss A') };
       let foundEntry = this.selections.find(selection => selection.attendee === this.attendee);
       if (!foundEntry) {
         foundEntry = { attendee: this.attendee, slots: new Set() };
@@ -85,10 +93,22 @@ export default {
       );
       if (!slotExists) foundEntry.slots.add(newSlot);
     },
-    send() {
+    async create() {
       this.intersection = findIntersection(this.selections);
+      this.meetingData = {
+        ...this.meetingData,
+        startTime: formatDate(this.meetingData.startDate + ' ' + this.intersection.start),
+        endTime: formatDate(this.meetingData.startDate + ' ' + this.intersection.end),
+      };
+      try {
+        await createMeeting(parseInt(this.meetingData.host), this.meetingData);
+        this.toast.success('Meeting is created successfully');
+      } catch (error) {
+        this.toast.error(error);
+        console.error(error);
+      }
     },
-  }
+  },
 }
 </script>
 
@@ -104,7 +124,7 @@ export default {
   margin: 0 10px 0 10px;
 }
 
-#icon {
+.icon {
   margin-left: 5px;
   cursor: pointer;
 }

@@ -1,7 +1,7 @@
+import CreateMeeting from '@/components/CreateMeeting.vue';
+import UserLogin from '@/components/UserLogin.vue';
+import UserRegister from '@/components/UserRegister.vue';
 import UserTimeSlots from '@/components/UserTimeSlots.vue';
-import UserLogin from '../components/UserLogin.vue';
-import UserRegister from '../components/UserRegister.vue';
-import CreateMeeting from '../components/CreateMeeting.vue'
 
 export default [
     {
@@ -17,13 +17,13 @@ export default [
     },
     {
         path: '/availabilities',
-        name: 'availabilities',
+        name: 'UserTimeSlots',
         component: UserTimeSlots
     },
     {
         path: '/accounts/:userId/meetings',
         alias: '/accounts/:userId/meetings',
-        name: 'createMeeting',
+        name: 'CreateMeeting',
         component: CreateMeeting
     }
 ]

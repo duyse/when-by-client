@@ -1,5 +1,9 @@
 import moment from 'moment';
 
+export function formatDate(inputDate) {
+  return moment(inputDate).format('YYYY-MM-DD hh:mm:ss A');
+}
+
 export function findIntersection(timeSlots) {
   if (timeSlots.length < 2) {
     return null; // Cannot find intersection with less than two time slots

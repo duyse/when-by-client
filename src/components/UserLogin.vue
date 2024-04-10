@@ -21,15 +21,15 @@
 import { login } from '../apis/login';
 
 export default {
-  name: "UserLogin",
+  name: 'UserLogin',
 
   data() {
     return {
       loginRequest: {
-        username: "",
-        password: ""
+        username: '',
+        password: '',
       },
-      message: ""
+      message: '',
     }
   },
   methods: {
@@ -37,17 +37,17 @@ export default {
       event.preventDefault();
       login(this.loginRequest)
         .then((res) => {
-          let user = res.data
-          let userId = user.id
-          localStorage.setItem("id", userId);
-          console.log("User has logged in: " + user.username + userId)
-          this.$router.push({ name: "createMeeting", params: { userId: userId } });     //redirect to the home screen
+          let user = res.data;
+          let userId = user.id;
+          localStorage.setItem('username', user.username);
+          console.log('User has logged in: ' + user.username + userId);
+          this.$router.push({ name: 'CreateMeeting', params: { userId } });     // Redirect to the home screen
         })
         .catch((err) => {
-          this.loginRequest.username = ""
-          this.loginRequest.password = ""
-          this.message = err.response.data.message
-          console.log(err.response.data)
+          this.loginRequest.username = '';
+          this.loginRequest.password = '';
+          this.message = err.response.data.message;
+          console.log(err);
         })
     }
   }
