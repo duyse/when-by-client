@@ -14,7 +14,6 @@
         <label for="password">Password</label>
         <input type="password" id="password" required v-model="registerRequest.password" />
       </div>
-      <div class="login-error">{{ this.message }}</div>
     </form>
     <button type="submit" class="login-btn" @click="register">Register</button>
     <p>Already have an account? <router-link to="/">Login here</router-link></p> <!--router-link-->
@@ -22,19 +21,23 @@
 </template>
 
 <script>
-import { register } from '../apis/register'
+import { register } from '@/services/register';
+import { useToast } from 'vue-toastification';
 
 export default {
-  name: "UserRegister",
-
+  name: 'UserRegister',
+  setup() {
+    const toast = useToast();
+    return { toast }
+  },
   data() {
     return {
       registerRequest: {
         username: "",
         email: "",
-        password: ""
+        password: "",
       },
-      message: ""
+      message: "",
     }
   },
 
@@ -43,15 +46,12 @@ export default {
       event.preventDefault();
 
       register(this.registerRequest)
-        .then((res) => {
-          let user = res.data
-          console.log('User created: ' + user.username)
-          this.$router.push('login')
-        })
+        .then(() => this.$router.push('login'))
         .catch((err) => {
-          this.message = err.response.data.message
-          console.log(err)
-        })
+          this.message = err.response.data.message;
+          this.toast.error(this.message);
+          console.log(err);
+        });
     }
   }
 }
@@ -116,4 +116,4 @@ h2.login-title {
   font-size: 0.9em;
   color: red;
 }
-</style>
+</style>../services/register

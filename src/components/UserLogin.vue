@@ -18,11 +18,15 @@
 </template>
 
 <script>
-import { login } from '../apis/login';
+import { login } from '@/services/login';
+import { useToast } from 'vue-toastification';
 
 export default {
   name: 'UserLogin',
-
+  setup() {
+    const toast = useToast();
+    return { toast }
+  },
   data() {
     return {
       loginRequest: {
@@ -30,35 +34,6 @@ export default {
         password: '',
       },
       message: '',
-        methods: {
-            login(event) {
-                event.preventDefault();
-
-                login(this.loginRequest)
-                .then((res) => {
-                    let user = res.data
-                    console.log("User has logged in: " + user.username)
-                    localStorage.setItem('uid', user.id)
-                    location.reload();
-                    this.$router.push({ name: "meetings" });     //redirect to the home screen
-                })
-                .catch((err) => {
-                    this.loginRequest.username = ""
-                    this.loginRequest.password = ""
-                    console.log(err)
-                })
-            },
-
-            checkLogin() {
-                if (localStorage.getItem('uid')) {
-                    this.$router.push({name: 'meetings'})
-                }
-            }
-        },
-
-        mounted() {
-            this.checkLogin();
-        }
     }
   },
   methods: {
@@ -67,19 +42,17 @@ export default {
       login(this.loginRequest)
         .then((res) => {
           let user = res.data;
-          let userId = user.id;
-          localStorage.setItem('username', user.username);
-          console.log('User has logged in: ' + user.username + userId);
-          this.$router.push({ name: 'CreateMeeting', params: { userId } });     // Redirect to the home screen
+          localStorage.setItem('uid', user.id);
+          this.$router.push({ name: 'meetings' });     //redirect to the home screen
         })
         .catch((err) => {
+          this.toast.error(err.response.data.message);
           this.loginRequest.username = '';
           this.loginRequest.password = '';
-          this.message = err.response.data.message;
           console.log(err);
-        })
-    }
-  }
+        });
+    },
+  },
 }
 
 </script>

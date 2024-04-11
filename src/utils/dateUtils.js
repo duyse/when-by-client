@@ -1,7 +1,24 @@
 import moment from 'moment';
 
 export function formatDate(inputDate) {
-  return moment(inputDate).format('YYYY-MM-DD hh:mm:ss A');
+  return moment(inputDate, 'YYYY-MM-DD hh:mm:ss A').format('YYYY-MM-DD');
+}
+
+export function formatTime(inputTime) {
+  return moment(inputTime, 'hh:mm A').format('hh:mm:ss A');
+}
+
+export function compare(start, end) {
+  const formattedEnd = moment(end, 'YYYY-MM-DD hh:mm A').format('hh:mm A');
+  return moment(start, 'hh:mm A').diff(moment(formattedEnd, 'hh:mm A'), 'hours');
+}
+
+export function formatLimit(inputDate) {
+  const hour = parseInt(inputDate.slice(11, 13));
+  const hour12 = hour % 12 || 12;
+  const period = hour < 12 ? 'a' : 'p';
+  const formattedDate = hour12 + period;
+  return formattedDate;
 }
 
 export function findIntersection(timeSlots) {
