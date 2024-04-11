@@ -13,7 +13,7 @@
       <div class="form-group-input">
         <label>Start Time:</label>
         <vue-timepicker v-model="createMeetingRequest.start" manual-input hide-dropdown class="time" format="hh:mm A"
-          :hour-range="[[0, 24]]" :minute-interval="0">
+          :hour-range="[[0, 24]]" :minute-interval="5">
           <template #icon>
             <i class="icon fa-regular fa-clock"></i>
           </template>
@@ -22,7 +22,7 @@
       <div class="form-group-input">
         <label>End Time:</label>
         <vue-timepicker v-model="createMeetingRequest.end" manual-input hide-dropdown class="time"
-          :hour-range="[[0, 24]]" format="hh:mm A" :minute-interval="0">
+          :hour-range="[[0, 24]]" format="hh:mm A" :minute-interval="5">
           <template #icon>
             <i class="icon fa-regular fa-clock"></i>
           </template>
@@ -44,7 +44,7 @@ import { useSharedStore } from '@/utils/store';
 import VueTimepicker from 'vue3-timepicker';
 import { useToast } from 'vue-toastification';
 import Datepicker from 'vue3-datepicker';
-import { compare, formatDate } from '@/utils/dateUtils';
+import { compareTime, formatDate } from '@/utils/dateUtils';
 import { ref } from 'vue';
 
 export default {
@@ -73,16 +73,15 @@ export default {
   methods: {
     next(event) {
       event.preventDefault();
-
+      if (!this.createMeetingRequest.start || !this.createMeetingRequest.end) {
+        this.toast.error('Please enter start time and end time');
+        return;
+      }
       // Check if end time > start time
-      if (compare(this.createMeetingRequest.end, this.createMeetingRequest.start) <= 0) {
+      if (compareTime(this.createMeetingRequest.end, this.createMeetingRequest.start) <= 0) {
         this.toast.error('End time cannot be the same or before start time');
         return;
       }
-      // if (compare(this.createMeetingRequest.start, moment().hours()) <= 0 || compare(this.createMeetingRequest.end, moment().hours()) <= 0) {
-      //   this.toast.error('Cannot choose earlier time than now');
-      //   return;
-      // }
       // Check if meeting's name is blank
       if (!this.createMeetingRequest.name) {
         this.toast.error('Please name your meeting');

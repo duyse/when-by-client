@@ -10,7 +10,7 @@
         <div class="form-group-input">
           <label>Start Time:</label>
           <vue-timepicker hide-disabled-hours v-model="startTime" manual-input hide-dropdown class="time"
-            format="hh:mm A" :hour-range="[[0, 24]]" :minute-interval="0">
+            format="hh:mm A" :hour-range="[[0, 24]]" :minute-interval="5">
             <template #icon>
               <i class="icon fa-regular fa-clock"></i>
             </template>
@@ -19,7 +19,7 @@
         <div class="form-group-input">
           <label>End Time:</label>
           <vue-timepicker hide-disabled-hours v-model="endTime" manual-input hide-dropdown class="time"
-            :hour-range="[[0, 24]]" format="hh:mm A" :minute-interval="0">
+            :hour-range="[[0, 24]]" format="hh:mm A" :minute-interval="5">
             <template #icon>
               <i class="icon fa-regular fa-clock"></i>
             </template>
@@ -42,9 +42,6 @@
             <span>Add</span>
           </button>
           <button id="create" @click="create">Create</button>
-          <button id="send" @click="send">
-            <span>Send</span>
-          </button>
         </div>
       </div>
     </div>
@@ -57,7 +54,8 @@
           <i class="icon fa-solid fa-trash" @click="remove(index)"></i>
         </p>
       </div>
-      <p v-if="intersection.start">Best time interval: {{ intersection.start }} - {{ intersection.end }}</p>
+      <p v-if="intersection && intersection.start">Best time interval: {{ intersection && intersection.start }} - {{
+        intersection && intersection.end }}</p>
     </div>
   </div>
 </template>
@@ -65,7 +63,7 @@
 <script>
 import VueTimepicker from 'vue3-timepicker';
 import moment from 'moment';
-import { compare, findIntersection, formatDate, formatTime } from '@/utils/dateUtils';
+import { compare, compareTime, findIntersection, formatDate, formatTime } from '@/utils/dateUtils';
 import { useToast } from 'vue-toastification';
 import 'vue3-timepicker/dist/VueTimepicker.css';
 import { useSharedStore } from '@/utils/store';
@@ -81,12 +79,15 @@ export default {
     const sharedStore = useSharedStore();
     const meetingData = sharedStore.sharedData;
     const toast = useToast();
+    const intersection = ref({
+      start: '',
+      end: '',
+    });
     let mid = ref('');
-    return { meetingData, mid, toast }
+    return { intersection, meetingData, mid, toast }
   },
   mounted() {
     if (!this.meetingData) this.$router.push({ name: 'CreateMeeting', params: { userId: this.uid } });
-    console.log(this.meetingData);
   },
   data() {
     return {
@@ -100,10 +101,6 @@ export default {
       },
       recipients: [],
       selections: [],
-      intersection: {
-        start: '',
-        end: '',
-      },
     }
   },
   methods: {
@@ -114,6 +111,11 @@ export default {
       }
       if (compare(this.startTime, this.meetingData.startTime) < 0 || compare(this.endTime, this.meetingData.endTime) > 0) {
         this.toast.error('Invalid interval, please choose again');
+        return;
+      }
+      // Check if end time > start time
+      if (compareTime(this.endTime, this.startTime) <= 0) {
+        this.toast.error('End time cannot be the same or before start time');
         return;
       }
       this.recipients.push(this.attendee.email);
@@ -129,41 +131,37 @@ export default {
       if (!slotExists) foundEntry.slots.add(newSlot);
     },
     async create() {
-      if (!this.meetingData || !this.intersection.start || !this.intersection.end) {
-        this.toast.error('All fields must not be blank');
-        return;
-      }
-      this.intersection = findIntersection(this.selections);
-      this.meetingData = {
-        ...this.meetingData,
-        startTime: formatDate(this.meetingData.startTime) + ' ' + formatTime(this.intersection.start),
-        endTime: formatDate(this.meetingData.endTime) + ' ' + formatTime(this.intersection.end),
-      };
-      await Promise.all([
-        MeetingService.createMeeting(this.meetingData.host, this.meetingData),
-        MeetingService.getHostedMeetings(this.meetingData.host)
-          .then(response => {
-            const records = response.data;
-            const lastRecord = records.reduce((max, obj) => obj.id > max.id ? obj : max, records[0]);
-            this.mid = lastRecord.id;
-          })
-          .catch(error => {
-            this.toast.error(error);
-          })
-      ]);
-      this.toast.success('Meeting is created successfully');
-    },
-    remove(index) {
-      this.selections.splice(index, 1);
-    },
-    async send() {
       if (!this.meetingData) {
         this.toast.error('All fields must not be blank');
         return;
       }
+      this.intersection = findIntersection(this.selections);
+      if (!this.intersection) {
+        this.toast.error('There is no best time interval');
+        return;
+      }
+      const intervals = {
+        ...this.meetingData,
+        startTime: formatDate(this.meetingData.startTime) + ' ' + formatTime(this.intersection.start),
+        endTime: formatDate(this.meetingData.endTime) + ' ' + formatTime(this.intersection.end),
+      };
       const { name } = this.meetingData;
       const sender = "duynse@gmail.com";
       const subject = `Confirmation of meeting ${name}`;
+      await MeetingService.createMeeting(intervals.host, intervals);
+      await MeetingService.getHostedMeetings(intervals.host)
+        .then(response => {
+          const records = response.data;
+          console.log(records);
+          if (Array.isArray(records) && records.length > 0) {
+            const lastRecord = records.reduce((max, obj) => obj.id > max.id ? obj : max, records[0]);
+            this.mid = lastRecord.id;
+          } else this.mid = records[0].id;
+          this.toast.success('Meeting is created successfully');
+        })
+        .catch(error => {
+          this.toast.error(error.message);
+        });
       for (let i = 0; i < this.recipients.length; i++) {
         const email = {
           from: sender,
@@ -171,11 +169,12 @@ export default {
           subject,
           name,
         };
-        await MeetingService.sendEmail(this.mid, email).then(res => {
-          console.log(res.data);
-          this.toast.success('Invite successfully');
+        await MeetingService.sendEmail(this.mid, email).then(() => {
         }).catch(error => this.toast.error(error));
       }
+    },
+    remove(index) {
+      this.selections.splice(index, 1);
     },
   },
 }

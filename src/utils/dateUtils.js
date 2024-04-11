@@ -10,7 +10,13 @@ export function formatTime(inputTime) {
 
 export function compare(start, end) {
   const formattedEnd = moment(end, 'YYYY-MM-DD hh:mm A').format('hh:mm A');
-  return moment(start, 'hh:mm A').diff(moment(formattedEnd, 'hh:mm A'), 'hours');
+  return moment(start, 'hh:mm A').diff(moment(formattedEnd, 'hh:mm A'));
+}
+
+export function compareTime(start, end) {
+  const formattedStart = moment(start, 'hh:mm A');
+  const formattedEnd = moment(end, 'hh:mm A');
+  return formattedStart.diff(formattedEnd);
 }
 
 export function formatLimit(inputDate) {
@@ -22,15 +28,17 @@ export function formatLimit(inputDate) {
 }
 
 export function findIntersection(timeSlots) {
-  if (timeSlots.length < 2) {
-    return null; // Cannot find intersection with less than two time slots
-  }
+  // Cannot find intersection with less than two time slots
+  if (timeSlots.length < 2) return null;
+  
   const firstSlots = Array.from(timeSlots[0].slots).map(slot => ({
     start: moment(slot.start, 'hh:mm A'),
     end: moment(slot.end, 'hh:mm A'),
   }));
+
   let intersectionStart = firstSlots[0].start;
   let intersectionEnd = firstSlots[0].end;
+
   for (const attendee of timeSlots) {
     const attendeeSlots = Array.from(attendee.slots).map(slot => ({
       start: moment(slot.start, 'hh:mm A'),
@@ -47,8 +55,6 @@ export function findIntersection(timeSlots) {
     }
   }
   // If intersectionStart is after intersectionEnd, there's no overlap
-  if (intersectionStart.isAfter(intersectionEnd)) {
-    return null;
-  }
+  if (intersectionStart.isAfter(intersectionEnd)) return null;
   return { start: intersectionStart.format('hh:mm A'), end: intersectionEnd.format('hh:mm A') };
 }
